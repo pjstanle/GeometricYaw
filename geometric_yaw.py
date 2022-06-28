@@ -59,8 +59,6 @@ def get_yaw_angles(x, y, left_x, top_left_y, right_x, top_right_y, top_left_yaw,
     else:
         dx = (x-left_x)/(right_x-left_x)
         edge_y = top_left_y + (top_right_y-top_left_y)*dx
-        print("dx: ", dx)
-        print("edge_y: ", edge_y)
         if abs(y) > edge_y:
             return 0.0
         else:
@@ -73,11 +71,16 @@ def get_yaw_angles(x, y, left_x, top_left_y, right_x, top_right_y, top_left_yaw,
                 return yaw
 
 
+# def geometric_yaw(turbine_x, turbine_y, wind_direction, rotor_diameter,
+#                   left_x=5.4938,top_left_y=0.7972,
+#                   right_x=18.05744,top_right_y=0.8551,
+#                   top_left_yaw=27.3063,top_right_yaw=0.4695,
+#                   bottom_left_yaw=28.9070,bottom_right_yaw=0.7895):
 def geometric_yaw(turbine_x, turbine_y, wind_direction, rotor_diameter,
-                  left_x=5.4938,top_left_y=0.7972,
-                  right_x=18.05744,top_right_y=0.8551,
-                  top_left_yaw=27.3063,top_right_yaw=0.4695,
-                  bottom_left_yaw=28.9070,bottom_right_yaw=0.7895):
+                  left_x=0.0,top_left_y=1.0,
+                  right_x=25.0,top_right_y=1.0,
+                  top_left_yaw=30.0,top_right_yaw=0.0,
+                  bottom_left_yaw=30.0,bottom_right_yaw=0.0):
     """
     turbine_x: unrotated x turbine coords
     turbine_y: unrotated y turbine coords
@@ -92,8 +95,6 @@ def geometric_yaw(turbine_x, turbine_y, wind_direction, rotor_diameter,
     
     rotated_x, rotated_y, _ = rotate_coordinates_rel_west(np.array([wind_direction]), turbine_coordinates_array)
     processed_x, processed_y = process_layout(rotated_x[0][0],rotated_y[0][0],rotor_diameter)
-    print(processed_x)
-    print(processed_y)
     yaw_array = np.zeros(nturbs)
     for i in range(nturbs):
         yaw_array[i] = get_yaw_angles(processed_x[i], processed_y[i], left_x, top_left_y, right_x, top_right_y, top_left_yaw,
