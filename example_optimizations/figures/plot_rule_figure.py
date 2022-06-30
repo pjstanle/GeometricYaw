@@ -7,6 +7,7 @@ import sys
 import os
 sys.path.insert(0, '../../')
 from geometric_yaw import process_layout, get_yaw_angles
+from floris.utilities import rotate_coordinates_rel_west
 
 
 def place_turbines(nturbs,side_x,side_y,min_spacing):
@@ -140,9 +141,24 @@ wake_x = np.array([0,10])
 top_y = np.array([0.5, 0.5+10*0.1])
 bot_y = np.array([-0.5, -(0.5+10*0.1)])
 
-ax1 = plt.subplot(221)
 wind_direction = 0.0
+rot_wake_x_top = wake_x*np.cos(wind_direction) - top_y*np.sin(wind_direction)
+rot_wake_x_bot = wake_x*np.cos(wind_direction) - bot_y*np.sin(wind_direction)
+rot_wake_y_top = wake_x*np.sin(wind_direction) + top_y*np.cos(wind_direction)
+rot_wake_y_bot = wake_x*np.sin(wind_direction) + bot_y*np.cos(wind_direction)
+
 index = [0]
+ax1 = plt.subplot(221)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+arrow = plt.arrow(0,8.5,2,0,head_width=0.5,head_length=0.5,color="black")
+ax1.text(1,9,"wind\ndirection",fontsize=8,verticalalignment="bottom",horizontalalignment="center")
+for i in index:
+    ax1.plot(rot_wake_x_top+x[i],rot_wake_y_top+y[i],"--k",linewidth=0.5)
+    ax1.plot(rot_wake_x_bot+x[i],rot_wake_y_bot+y[i],"--k",linewidth=0.5)
+ax1.fill_between(rot_wake_x_top+x[i],rot_wake_y_top+y[i],rot_wake_y_bot+y[i],color=hex_to_rgb(orange, normalized=True), alpha=0.2)
+
+
 for i in range(len(x)):
     if i in index:
         circ = plt.Circle((x[i],y[i]),0.5,color=hex_to_rgb(orange, normalized=True))
@@ -154,24 +170,33 @@ for i in range(len(x)):
         circ = plt.Circle((x[i],y[i]),0.5,color=hex_to_rgb(black, normalized=True))
         ax1.add_patch(circ)
 
+
+
+ax1.plot([x[0],x[4]],[y[0],y[0]],color=hex_to_rgb(black, normalized=True))
+ax1.plot([x[4],x[4]],[y[0],y[4]],color=hex_to_rgb(black, normalized=True))
+ax1.text((x[4]-x[0])/2+x[0], y[0], "dx", fontsize=8, horizontalalignment="center", verticalalignment="bottom")
+ax1.text(x[4], (y[0]-y[4])/2+y[4], "dy", fontsize=8, horizontalalignment="left", verticalalignment="center")
+
+ax2 = plt.subplot(222)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+wind_direction = -0.9
+arrow = plt.arrow(-0.75,10,2*np.cos(wind_direction),2*np.sin(wind_direction),head_width=0.5,head_length=0.5,color=black)
+ax2.text(2.0,8.75,"wind\ndirection",fontsize=8,verticalalignment="bottom",horizontalalignment="center")
+index = [0]
+
 rot_wake_x_top = wake_x*np.cos(wind_direction) - top_y*np.sin(wind_direction)
 rot_wake_x_bot = wake_x*np.cos(wind_direction) - bot_y*np.sin(wind_direction)
 rot_wake_y_top = wake_x*np.sin(wind_direction) + top_y*np.cos(wind_direction)
 rot_wake_y_bot = wake_x*np.sin(wind_direction) + bot_y*np.cos(wind_direction)
 
 for i in index:
-    ax1.plot(rot_wake_x_top+x[i],rot_wake_y_top+y[i],"--k",linewidth=0.5)
-    ax1.plot(rot_wake_x_bot+x[i],rot_wake_y_bot+y[i],"--k",linewidth=0.5)
-ax1.axis("square")
-ax1.set_xlim(-2,12)
-ax1.set_xticks((0,5,10))
-ax1.set_yticks((0,5,10))
-ax1.set_ylim(-2,12)
+    ax2.plot(rot_wake_x_top+x[i],rot_wake_y_top+y[i],"--k",linewidth=0.5)
+    ax2.plot(rot_wake_x_bot+x[i],rot_wake_y_bot+y[i],"--k",linewidth=0.5)
+ax2.fill(np.array([rot_wake_x_top[0],rot_wake_x_top[-1],rot_wake_x_bot[-1],rot_wake_x_bot[0],rot_wake_x_top[0]])+x[0],
+         np.array([rot_wake_y_top[0],rot_wake_y_top[-1],rot_wake_y_bot[-1],rot_wake_y_bot[0],rot_wake_y_top[0]])+y[0],color=hex_to_rgb(orange, normalized=True), alpha=0.2)
 
 
-ax2 = plt.subplot(222)
-wind_direction = -0.9
-index = [0]
 for i in range(len(x)):
     if i in index:
         circ = plt.Circle((x[i],y[i]),0.5,color=hex_to_rgb(orange, normalized=True))
@@ -183,21 +208,47 @@ for i in range(len(x)):
         circ = plt.Circle((x[i],y[i]),0.5,color=hex_to_rgb(black, normalized=True))
         ax2.add_patch(circ)
 
-rot_wake_x_top = wake_x*np.cos(wind_direction) - top_y*np.sin(wind_direction)
-rot_wake_x_bot = wake_x*np.cos(wind_direction) - bot_y*np.sin(wind_direction)
-rot_wake_y_top = wake_x*np.sin(wind_direction) + top_y*np.cos(wind_direction)
-rot_wake_y_bot = wake_x*np.sin(wind_direction) + bot_y*np.cos(wind_direction)
+nturbs = 5
+turbine_coordinates_array = np.zeros((nturbs,3))
+turbine_coordinates_array[:,0] = x[:]
+turbine_coordinates_array[:,1] = y[:]
+rtx, rty, _ = rotate_coordinates_rel_west(np.array([-90-np.rad2deg(wind_direction)]), turbine_coordinates_array)
+dx = rtx[0,0,2] - rtx[0,0,0]
+dy = rty[0,0,0] - rty[0,0,2]
 
-for i in index:
-    ax2.plot(rot_wake_x_top+x[i],rot_wake_y_top+y[i],"--k",linewidth=0.5)
-    ax2.plot(rot_wake_x_bot+x[i],rot_wake_y_bot+y[i],"--k",linewidth=0.5)
-ax2.axis("square")
-ax2.set_xlim(-2,12)
+dx_line_x = [x[0],dx*np.cos(wind_direction)+x[0]]
+dx_line_y = [y[0],dx*np.sin(wind_direction)+y[0]]
+plt.plot(dx_line_x,dx_line_y,color="black")
+dy_line_x = [dx*np.cos(wind_direction)+x[0],dx*np.cos(wind_direction)+dy*np.sin(wind_direction)+x[0]]
+dy_line_y = [dx*np.sin(wind_direction)+y[0],dx*np.sin(wind_direction)-dy*np.cos(wind_direction)+y[0]]
+plt.plot(dy_line_x,dy_line_y,color="black")
+
+ax2.text(dx*np.cos(wind_direction)/2+x[0],(dx_line_y[1]-dx_line_y[0])/2+y[0],"dx",fontsize=8,horizontalalignment="left",verticalalignment="bottom")
+ax2.text((dy_line_x[0]-dy_line_x[1])/2+x[2],(dy_line_y[1]-dy_line_y[0])/2+y[2],"dy",fontsize=8,horizontalalignment="left",verticalalignment="top")
+
+
+
+
+ax1.axis("equal")
+ax1.set_xticks((0,5,10))
+ax1.set_yticks((0,5,10))
+ax1.set_xbound(lower=-2,upper=12)
+ax1.set_ybound(lower=-1,upper=11)
+ax1.text(-0.5,-0.25,"A",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
+
+
+ax2.axis("equal")
 ax2.set_xticks((0,5,10))
 ax2.set_yticks((0,5,10))
-ax2.set_ylim(-2,12)
+ax2.set_xbound(lower=-2,upper=12)
+ax2.set_ybound(lower=-1,upper=11)
+ax2.text(-1.0,-0.6,"B",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
 
+ax1.set_xlabel("x (D)",fontsize=8)
+ax1.set_ylabel("y (D)",fontsize=8)
 
+ax2.set_xlabel("x (D)",fontsize=8)
+ax2.set_ylabel("y (D)",fontsize=8)
 
 
 
@@ -209,7 +260,7 @@ ax3.set_xlim(4,35)
 ax3.set_xlabel("dx/D",fontsize=8)
 ax3.set_ylabel("dy/D",fontsize=8)
 ax3.set_title("continuously optimized yaw angles",fontsize=8)
-ax3.text(5, 3.5, "C", verticalalignment="top", fontweight="bold",fontsize=12)
+
 
 ax4 = plt.subplot(224,sharex=ax3,sharey=ax3)
 plt.xticks(fontsize=8)
@@ -230,9 +281,10 @@ boundary_y = np.array([1.0,1.5,6.35,-6.35,-1.5,-1.0,-1.0,1.0,1.0])
 ax4.fill(boundary_x,boundary_y,color="black")
 
 
+ax4.set_ylabel("dy/D",fontsize=8)
 ax4.set_xlabel("dx/D",fontsize=8)
 ax4.set_title("geometric yaw relationship",fontsize=8)
-ax4.text(5, 3.5, "D", verticalalignment="top", fontweight="bold",fontsize=12)
+
 
 x = np.linspace(4.75,25,500)
 y = np.linspace(-1,1,500)
@@ -245,13 +297,21 @@ for i in range(len(x)-1):
                    top_right_yaw, bottom_left_yaw, bottom_right_yaw)
 
 
-ax4.pcolormesh(x, y, z,cmap=mycolormap)
+im = ax4.pcolormesh(x, y, z,cmap=mycolormap,vmax=30,vmin=-30)
 
-# fig.subplots_adjust(right=0.85,left=0.1,bottom=0.15)
-# cbar_ax = fig.add_axes([0.88, 0.1495, 0.03, 0.73])
-# cbar = fig.colorbar(im, cax=cbar_ax)
-# cbar.set_label("yaw angle",fontsize=8)
-# cbar.ax.tick_params(labelsize=8)
+ax3.text(6, -6, "C", verticalalignment="bottom", fontweight="bold",fontsize=12)
+ax4.text(6, -6, "D", verticalalignment="bottom", fontweight="bold",fontsize=12)
 
-# plt.savefig("figures/yaw_rule.png",transparent=True)
+
+plt.suptitle("dx and dy definition", fontsize=8, y=0.99)
+
+plt.subplots_adjust(left=0.1,right=0.85,bottom=0.08,top=0.95,wspace=0.3,hspace=0.4)
+cbar_ax = fig.add_axes([0.88,0.08,0.025,0.362])
+cbar = fig.colorbar(im,cax=cbar_ax)
+cbar.ax.tick_params(labelsize=8)
+cbar.set_label("wind speed", fontsize=8)
+
+plt.savefig("yaw_rule.png",transparent=True)
+
 plt.show()
+

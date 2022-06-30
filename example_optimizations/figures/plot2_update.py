@@ -1,3 +1,4 @@
+from turtle import color
 from floris.tools.visualization import visualize_cut_plane, plot_turbines
 from floris.tools import FlorisInterface
 from floris.tools.floris_interface import generate_heterogeneous_wind_map
@@ -123,18 +124,117 @@ global colormap
 white = "FFFFFF"
 black = "000000"
 purple = "293462"
-lavendar = "DCD0FF"
+lav = "ACACC6"
 pink = "FFEEEC"
 # blue = "6CA6CD"
 blue = "000053"
+dark_blue = "000120"
 orange = "EC9B3B"
 yellow = "F7D716"
-colormap = get_continuous_cmap([blue,white])
 
+fontsize=8
+fig = plt.figure(figsize=(6,5.5))
+
+# cbar_ax2 = fig.add_axes([0.89,0.55,0.02,0.4])
+
+ax1 = fig.add_axes([0.05,0.52,0.3,0.4],polar=True)
+plt.tick_params(which="both", labelsize=fontsize)
+ax3 = fig.add_axes([0.1,0.05,0.31,0.4])
+plt.tick_params(which="both", labelsize=fontsize)
+ax4 = fig.add_axes([0.57,0.05,0.31,0.4])
+plt.tick_params(which="both", labelsize=fontsize)
+ax2 = fig.add_axes([0.57,0.52,0.31,0.4])
+plt.tick_params(which="both", labelsize=fontsize)
+
+ax2.axis("square")
+ax2.set_xlim(-1300,1300)
+ax2.set_ylim(-1300,1300)
+
+ax3.axis("square")
+ax3.set_xlim(-1300,1300)
+ax3.set_ylim(-1300,1300)
+
+ax4.axis("square")
+ax4.set_xlim(-1300,1300)
+ax4.set_ylim(-1300,1300)
+
+
+"""
+ax1 windrose
+"""
+colormap = get_continuous_cmap([blue,lav])
+ndirs = 72
+nspeeds = 1 # directionally averaged if nspeeds = 1
+wd, freq, ws = alturasRose(ndirs, nSpeeds=nspeeds)
+freq = freq/np.sum(freq)
+
+dirs = np.zeros(ndirs)
+for i in range(ndirs):
+    dirs[i] = np.deg2rad(90.0 - wd[i])
+width = 1.0 * 2 * np.pi / ndirs
+for i in range(ndirs):
+    bottom = 0.0
+    frac = (ws[i]-min(ws))/(max(ws)-min(ws))
+    ax1.bar(dirs[i], freq[i],
+            bottom=bottom, width=width,
+            color=colormap(frac)
+            )
+
+pi = np.pi
+ax1.set_xticks((0, pi / 4, pi / 2, 3 * pi / 4, pi, 5 * pi / 4,
+                3 * pi / 2, 7 * pi / 4))
+ax1.set_xticklabels(("E", "NE", "N", "NW", "W", "SW", "S", "SE"),
+                    fontsize=8)
+ax1.xaxis.labelpad = -2000.0
+plt.yticks(fontsize=8)
+ax1.set_yticks((0.01,0.02,0.03))
+ax1.set_yticklabels(("1%","2%","3%"))
+
+cbar_ax1 = fig.add_axes([0.4,0.5505,0.02,0.3388])
+norm = mcolors.Normalize(vmin=min(ws), vmax=max(ws))
+cb = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap),
+             cax=cbar_ax1)
+cb.set_label(label='wind speed (m/s)',fontsize=8)
+cb.ax.tick_params(labelsize=8)
+
+
+"""
+ax2 het inflow map
+"""
+# colormap = get_continuous_cmap([dark_blue,blue,orange],float_list=[0.0,0.09853168047904871,1.0])
+colormap = get_continuous_cmap([blue,white])
 minx = -2000
 maxx = 2000
 miny = -2000
 maxy = 2000
+
+grid_x = np.linspace(minx,maxx,500)
+grid_y = np.linspace(minx,maxx,500)
+grid_xx, grid_yy = np.meshgrid(grid_x, grid_y)
+x_locs = np.ndarray.flatten(grid_xx)
+y_locs = np.ndarray.flatten(grid_yy)
+
+speed_ups = create_wind_map(grid_xx, grid_yy)
+wind_function_small = interpolate.RectBivariateSpline(grid_x, grid_y, speed_ups)
+im = ax2.pcolor(grid_xx, grid_yy, speed_ups, cmap=colormap)
+
+minx_bound = -1000
+maxx_bound = 1000
+miny_bound = -1000
+maxy_bound = 1000
+bx = np.array([minx_bound,minx_bound,maxx_bound,maxx_bound,minx_bound])
+by = np.array([miny_bound,maxy_bound,maxy_bound,miny_bound,miny_bound])
+ax2.plot(bx,by,color=hex_to_rgb(orange,normalized=True))
+
+cbar_ax2 = fig.add_axes([0.89,0.5505,0.02,0.3388])
+cbar = fig.colorbar(im,cax=cbar_ax2)
+cbar.ax.tick_params(labelsize=8)
+cbar.set_label("local speed multiplier", fontsize=8)
+
+"""
+ax3 layout only opt
+"""
+colormap = get_continuous_cmap([blue,white])
 
 grid_x = np.linspace(minx,maxx,50)
 grid_y = np.linspace(minx,maxx,50)
@@ -145,10 +245,6 @@ y_locs = np.ndarray.flatten(grid_yy)
 speed_ups = create_wind_map(grid_xx, grid_yy)
 wind_function_small = interpolate.RectBivariateSpline(grid_x, grid_y, speed_ups)
 
-ndirs = 72
-nspeeds = 1 # directionally averaged if nspeeds = 1
-wd, freq, ws = alturasRose(ndirs, nSpeeds=nspeeds)
-freq = freq/np.sum(freq)
 index = np.argmax(freq)
 wind_directions = [wd[index]]
 wind_speeds = [ws[index]]
@@ -163,12 +259,6 @@ het_map_2d = generate_heterogeneous_wind_map(speed_ups_array, x_locs, y_locs)
 file_dir = os.path.dirname(os.path.abspath(__file__))
 fi = FlorisInterface('/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/inputs/gch.yaml', het_map=het_map_2d)
 
-minx_bound = -1000
-maxx_bound = 1000
-miny_bound = -1000
-maxy_bound = 1000
-bx = np.array([minx_bound,minx_bound,maxx_bound,maxx_bound,minx_bound])
-by = np.array([miny_bound,maxy_bound,maxy_bound,miny_bound,miny_bound])
 rotation_angle = -np.deg2rad((270-wind_directions[0]))
 ct = np.cos((rotation_angle))
 st = np.sin((rotation_angle))
@@ -184,28 +274,8 @@ nturbs = len(turbine_x)
 fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
                     layout=(turbine_x, turbine_y))
 
-fontsize=8
-fig = plt.figure(figsize=(6,5))
-ax3 = plt.subplot(223)
-plt.tick_params(which="both", labelsize=fontsize)
-ax4 = plt.subplot(224,sharey=ax3)
-plt.tick_params(which="both", labelsize=fontsize)
-plt.setp(ax4.get_yticklabels(), visible=False)
-ax1 = plt.subplot(221,sharex=ax3)
-plt.tick_params(which="both", labelsize=fontsize)
-plt.setp(ax1.get_xticklabels(), visible=False)
-ax2 = plt.subplot(222,sharex=ax4,sharey=ax1)
-plt.tick_params(which="both", labelsize=fontsize)
-plt.setp(ax2.get_xticklabels(), visible=False)
-plt.setp(ax2.get_yticklabels(), visible=False)
-
-
-im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, np.zeros((1,1,16)), ax1)
-ax1.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
 rot_tx = np.array(turbine_x)*ct - np.array(turbine_y)*st
 rot_ty = np.array(turbine_x)*st + np.array(turbine_y)*ct
-plot_turbines(ax1, rot_tx, rot_ty, np.zeros(16), np.zeros(nturbs)+126, color=None,
-              wind_direction=wind_directions[0],linewidth=0.75)
 
 filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/2_results/sequential_yaw_31.yml"
 with open(filename, 'r') as stream:
@@ -214,11 +284,15 @@ opt_yaw = np.array(data_loaded["yaw_angles"])
 opt_yaw = opt_yaw.reshape(72,16)
 yaw_angles = np.zeros((1,1,16))
 yaw_angles[0,0,:] = opt_yaw[index,:]
-print(opt_yaw[index])
-im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax2)
-ax2.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
-plot_turbines(ax2, rot_tx, rot_ty, opt_yaw[index], np.zeros(nturbs)+126, color=None,
+im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax3)
+ax3.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
+plot_turbines(ax3, rot_tx, rot_ty, opt_yaw[index], np.zeros(nturbs)+126, color=None,
               wind_direction=wind_directions[0],linewidth=0.75)
+
+
+"""
+ax4 geometric yaw opt
+"""
 
 filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/2_results_codesign/results_codesign_40.yml"# with open(filename, 'r') as stream:
 with open(filename, 'r') as stream:
@@ -229,13 +303,8 @@ nturbs = len(turbine_x)
 fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
                     layout=(turbine_x, turbine_y))
 
-im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, np.zeros((1,1,16)), ax3)
-ax3.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
 rot_tx = np.array(turbine_x)*ct - np.array(turbine_y)*st
 rot_ty = np.array(turbine_x)*st + np.array(turbine_y)*ct
-plot_turbines(ax3, rot_tx, rot_ty, np.zeros(16), np.zeros(nturbs)+126, color=None,
-              wind_direction=wind_directions[0],linewidth=0.75)
-
 
 filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/2_results_codesign/sequential_codesign_yaw_40.yml"
 with open(filename, 'r') as stream:
@@ -250,52 +319,36 @@ ax4.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
 plot_turbines(ax4, rot_tx, rot_ty, opt_yaw[index,:], np.zeros(nturbs)+126, color=None,
               wind_direction=wind_directions[0],linewidth=0.75)
 
-
-# ax1.axis("off")
-# ax2.axis("off")
-# ax3.axis("off")
-# ax4.axis("off")
-
-# print(repr(turbine_x))
-
-# ax1.set_title("sequential optimization with no yaw: 1785 W/m",fontsize=8,y=0.7)
-# ax2.set_title("sequential optimization with yaw: 1991 W/m",fontsize=8,y=0.7)
-# ax3.set_title("codesign optimization with no yaw: 1740 W/m",fontsize=8,y=0.7)
-# ax4.set_title("codesign optimization with yaw: 2135 W/m",fontsize=8,y=0.7)
-
-# plt.subplots_adjust(left=0.02,right=0.85,bottom=0.01,top=0.97)
-
-# cbar_ax = fig.add_axes([0.9,0.05,0.03,0.9])
-# cbar = fig.colorbar(im,cax=cbar_ax)
-# cbar.ax.tick_params(labelsize=8)
-# cbar.set_label("wind speed", fontsize=8)
-
-ax3.set_xlim(-1300,1300)
-ax3.set_ylim(-1300,1300)
-ax1.set_ylim(-1300,1300)
-ax2.set_xlim(-1300,1300)
-
-fontsize = 8
-ax1.set_ylabel("y (m)", fontsize=fontsize)
-ax3.set_ylabel("y (m)", fontsize=fontsize)
-ax3.set_xlabel("x (m)", fontsize=fontsize)
-ax4.set_xlabel("x (m)", fontsize=fontsize)
-
-plt.subplots_adjust(left=0.13,right=0.85,bottom=0.07,top=0.94,hspace=0.2)
-cbar_ax = fig.add_axes([0.9,0.3,0.03,0.4])
-cbar = fig.colorbar(im,cax=cbar_ax)
+cbar_ax4 = fig.add_axes([0.89,0.08,0.02,0.3388])
+cbar = fig.colorbar(im,cax=cbar_ax4)
 cbar.ax.tick_params(labelsize=8)
 cbar.set_label("wind speed", fontsize=8)
 
-ax1.set_title("layout only optimization\nwithout yaw",fontsize=8)
-ax2.set_title("layout only optimization\nwith yaw",fontsize=8)
-ax3.set_title("codesign optimization\nwithout yaw",fontsize=8)
-ax4.set_title("codesign optimization\nwith yaw",fontsize=8)
+fontsize = 8
+ax2.set_xlabel("x (m)", fontsize=fontsize)
+ax2.set_ylabel("y (m)", fontsize=fontsize)
+ax3.set_xlabel("x (m)", fontsize=fontsize)
+ax3.set_ylabel("y (m)", fontsize=fontsize)
+ax4.set_xlabel("x (m)", fontsize=fontsize)
+ax4.set_ylabel("y (m)", fontsize=fontsize)
 
-ax1.text(-1100,-1000,"A",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
-ax2.text(-1100,-1000,"B",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
-ax3.text(-1100,-1000,"C",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
-ax4.text(-1100,-1000,"D",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
+ax2.yaxis.labelpad = -15
+ax3.yaxis.labelpad = -15
+ax4.yaxis.labelpad = -15
+ax2.xaxis.labelpad = -0.5
+ax3.xaxis.labelpad = -0.5
+ax4.xaxis.labelpad = -0.5
 
-# plt.savefig("het_layouts.pdf",transparent=True)
+ax1.set_title("wind rose", fontsize=8, y=1.15)
+ax2.set_title("gaussian hill inflow", fontsize=8, y=1.04)
+ax3.set_title("layout optimized\nwithout yaw", fontsize=8, y=1.04)
+ax4.set_title("layout optimized\nwith geometric yaw", fontsize=8, y=1.04)
+
+
+ax2.text(-5500,1700,"A",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
+ax2.text(-1600,1700,"B",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
+ax3.text(-1600,1700,"C",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
+ax4.text(-1600,1700,"D",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
+
+plt.savefig("het_layouts_update.png",transparent=True)
 plt.show()

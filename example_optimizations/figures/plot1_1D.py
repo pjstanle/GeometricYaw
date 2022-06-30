@@ -170,17 +170,25 @@ ax4.axis("off")
 
 print(repr(turbine_x))
 
-ax1.set_title("sequential optimization with no yaw: 1785 W/m",fontsize=8,y=0.7)
-ax2.set_title("sequential optimization with yaw: 1991 W/m",fontsize=8,y=0.7)
-ax3.set_title("codesign optimization with no yaw: 1740 W/m",fontsize=8,y=0.7)
-ax4.set_title("codesign optimization with yaw: 2135 W/m",fontsize=8,y=0.7)
+ax1.set_title("no yaw control: 1785 W/m",fontsize=8,y=0.7)
+ax2.set_title("optimized yaw control: 1991 W/m",fontsize=8,y=0.7)
+ax3.set_title("no yaw control: 1740 W/m",fontsize=8,y=0.7)
+ax4.set_title("optimized yaw control: 2135 W/m",fontsize=8,y=0.7)
 
-plt.subplots_adjust(left=0.02,right=0.85,bottom=0.01,top=0.97)
+plt.subplots_adjust(left=0.06,right=0.91,bottom=0.01,top=0.97,hspace=0.0)
 
-cbar_ax = fig.add_axes([0.9,0.05,0.03,0.9])
+ax1.text(-600,-2000,"layout optimized\nwithout yaw",fontsize=8,horizontalalignment="center",rotation=90)
+ax3.text(-600,-2000,"layout optimized\nwith geometric yaw",fontsize=8,horizontalalignment="center",rotation=90)
+
+cbar_ax = fig.add_axes([0.92,0.05,0.02,0.9])
 cbar = fig.colorbar(im,cax=cbar_ax)
 cbar.ax.tick_params(labelsize=8)
-cbar.set_label("wind speed", fontsize=8)
+cbar.set_label("wind speed", fontsize=8, labelpad=-0.1)
 
-plt.savefig("line_layouts.pdf", transparent=True)
+ax1.text(0,400,"A.1",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
+ax2.text(0,400,"A.2",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
+ax3.text(0,400,"B.1",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
+ax4.text(0,400,"B.2",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
+plt.savefig("line_layouts.png", transparent=True)
 plt.show()
+
