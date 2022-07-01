@@ -322,7 +322,7 @@ plot_turbines(ax4, rot_tx, rot_ty, opt_yaw[index,:], np.zeros(nturbs)+126, color
 cbar_ax4 = fig.add_axes([0.89,0.08,0.02,0.3388])
 cbar = fig.colorbar(im,cax=cbar_ax4)
 cbar.ax.tick_params(labelsize=8)
-cbar.set_label("wind speed", fontsize=8)
+cbar.set_label("wind speed (m/s)", fontsize=8)
 
 fontsize = 8
 ax2.set_xlabel("x (m)", fontsize=fontsize)
