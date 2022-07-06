@@ -309,7 +309,7 @@ plt.subplots_adjust(left=0.1,right=0.85,bottom=0.08,top=0.95,wspace=0.3,hspace=0
 cbar_ax = fig.add_axes([0.88,0.08,0.025,0.362])
 cbar = fig.colorbar(im,cax=cbar_ax)
 cbar.ax.tick_params(labelsize=8)
-cbar.set_label("wind speed", fontsize=8)
+cbar.set_label("yaw angle (deg)", fontsize=8)
 
 plt.savefig("yaw_rule.png",transparent=True)
 

@@ -246,6 +246,8 @@ speed_ups = create_wind_map(grid_xx, grid_yy)
 wind_function_small = interpolate.RectBivariateSpline(grid_x, grid_y, speed_ups)
 
 index = np.argmax(freq)
+index = np.where(wd==270.0)[0]
+# print(index)
 wind_directions = [wd[index]]
 wind_speeds = [ws[index]]
 
@@ -284,6 +286,7 @@ opt_yaw = np.array(data_loaded["yaw_angles"])
 opt_yaw = opt_yaw.reshape(72,16)
 yaw_angles = np.zeros((1,1,16))
 yaw_angles[0,0,:] = opt_yaw[index,:]
+print(yaw_angles)
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax3)
 ax3.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
 plot_turbines(ax3, rot_tx, rot_ty, opt_yaw[index], np.zeros(nturbs)+126, color=None,
@@ -314,6 +317,7 @@ opt_yaw = opt_yaw.reshape(72,16)
 
 yaw_angles = np.zeros((1,1,16))
 yaw_angles[0,0,:] = opt_yaw[index,:]
+print(yaw_angles)
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax4)
 ax4.plot(rx,ry,color=hex_to_rgb(orange,normalized=True))
 plot_turbines(ax4, rot_tx, rot_ty, opt_yaw[index,:], np.zeros(nturbs)+126, color=None,
@@ -341,8 +345,8 @@ ax4.xaxis.labelpad = -0.5
 
 ax1.set_title("wind rose", fontsize=8, y=1.15)
 ax2.set_title("gaussian hill inflow", fontsize=8, y=1.04)
-ax3.set_title("layout optimized\nwithout yaw", fontsize=8, y=1.04)
-ax4.set_title("layout optimized\nwith geometric yaw", fontsize=8, y=1.04)
+ax3.set_title("layout optimized\nwithout yaw", fontsize=8, y=1.01)
+ax4.set_title("layout optimized\nwith geometric yaw", fontsize=8, y=1.01)
 
 
 ax2.text(-5500,1700,"A",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
@@ -350,5 +354,5 @@ ax2.text(-1600,1700,"B",fontsize=12,weight="bold",horizontalalignment="left",ver
 ax3.text(-1600,1700,"C",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
 ax4.text(-1600,1700,"D",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="top")
 
-plt.savefig("het_layouts_update.png",transparent=True)
+# plt.savefig("het_layouts_update.png",transparent=True)
 plt.show()
