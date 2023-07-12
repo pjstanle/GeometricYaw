@@ -52,12 +52,28 @@ def obj_func(varDict):
 
 
 if __name__ == "__main__":
+    # nruns = 50
+    # dens = np.zeros(nruns)
+    # for i in range(nruns):
+    #     # filename = "1_results/layout_continuous_%s.yml"%i
+    #     filename = "1_results/codesign_continuous_%s.yml"%i
+    #     with open(filename, 'r') as stream:
+    #         data_loaded = yaml.safe_load(stream)
+    #     dens[i] = data_loaded["opt_density"]
+    # print(dens)
+    # print(max(dens))
+    # print(np.argmax(dens))
+    # layout = 25
+    # codesign = 25
+    
+
+
     global ncalls
     global fi
     global spacing_array
     global scale
 
-    scale = 1E2
+    scale = 1E3
     ncalls = 0
 
     wind_directions = [270.0]
@@ -70,11 +86,14 @@ if __name__ == "__main__":
     nturbs = 16
     rotor_diameter = 126.0
     
-    filename = "1_results/layout.yml"
-    # filename = "1_results/codesign.yml"
+    # filename = "1_results/layout_29.yml"
+    # filename = "1_results/codesign_21.yml"
+    # filename = "1_results/layout_continuous_25.yml"
+    filename = "1_results/codesign_continuous_25.yml"
     with open(filename, 'r') as stream:
         data_loaded = yaml.safe_load(stream)
-    spacing_array = data_loaded["opt_spacing"]
+    # spacing_array = data_loaded["opt_spacing"]
+    spacing_array = np.ones(nturbs - 1) * data_loaded["opt_spacing"]
 
     turbine_x = np.zeros(nturbs)
     turbine_y = np.zeros(nturbs)
@@ -82,7 +101,7 @@ if __name__ == "__main__":
         turbine_x[i+1] = turbine_x[i] + spacing_array[i]
 
     fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
-                    layout=(turbine_x, turbine_y))
+                    layout_x=turbine_x, layout_y=turbine_y)
                 
     x = {}
     initial_yaw = np.zeros(nturbs)
@@ -95,16 +114,17 @@ if __name__ == "__main__":
     # OPTIMIZATION
     optProb = pyoptsparse.Optimization("optimize 1D yaw",obj_func)
 
-    optProb.addVarGroup("yaw", nturbs, type="c", value=initial_yaw, lower=-30.0/scale, upper=30/scale)
+    optProb.addVarGroup("yaw", nturbs, varType="c", value=(initial_yaw + 1.0)/scale, lower=-30.0/scale, upper=30.0/scale)
     optProb.addObj("obj")
     optimize = pyoptsparse.SLSQP()
     # optimize.setOption("MAXIT",value=50)
-    # optimize.setOption("ACC",value=1E-4)
+    # optimize.setOption("ACC",value=1E-6)
 
     ncalls = 0
     start_time = time.time()
     solution = optimize(optProb,sens="FD")
     opt_time = time.time() - start_time
+    print(solution)
 
     # END RESULTS
     opt_DVs = solution.getDVs()
@@ -122,7 +142,9 @@ if __name__ == "__main__":
     results_dict["opt_time"] = float(opt_time)
     results_dict["ncalls"] = int(ncalls)
     results_dict["opt_density"] = float(opt_density)
+    results_dict["initial_density"] = float(initial_density)
     results_dict["opt_yaw"] = opt_yaw.tolist()
-    results_filename = '1_results/layout_yaw.yml'
+    # results_filename = '1_results/layout_continuous_yaw.yml'
+    results_filename = '1_results/codesign_continuous_yaw.yml'
     with open(results_filename, 'w') as outfile:
         yaml.dump(results_dict, outfile)

@@ -34,18 +34,18 @@ def obj_func(varDict):
     global wind_directions
     global wind_speeds
 
-    opt_yaw = True
+    opt_yaw = False
 
     ncalls += 1
     nturbs = 16
-    spacing_array = varDict["spacing_array"]
+    spacing_array = np.ones(nturbs - 1) * varDict["spacing_array"]
     turbine_x = np.zeros(nturbs)
     turbine_y = np.zeros(nturbs)
     for i in range(nturbs-1):
         turbine_x[i+1] = turbine_x[i] + spacing_array[i]
 
     fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
-                    layout=(turbine_x, turbine_y))
+                    layout_x=turbine_x, layout_y=turbine_y)
 
     if opt_yaw:
         yaw = np.zeros((1,1,nturbs))
@@ -83,48 +83,72 @@ if __name__ == "__main__":
 
     nturbs = 16
     rotor_diameter = 126.0
-    initial_spacing_array = np.zeros(nturbs-1) + 5*rotor_diameter
-    
-    x = {}
-    x["spacing_array"] = initial_spacing_array
 
-    funcs,fail = obj_func(x)
-    initial_density = -funcs["obj"]
-    print(initial_density)
 
-    # OPTIMIZATION
-    optProb = pyoptsparse.Optimization("optimize 1D layout",obj_func)
+    np.random.seed(0)
+    nruns = 5
 
-    optProb.addVarGroup("spacing_array", nturbs-1, type="c", value=initial_spacing_array, lower=0.0, upper=1E6)
-    optProb.addObj("obj")
-    optimize = pyoptsparse.SLSQP()
-    # optimize.setOption("MAXIT",value=50)
-    # optimize.setOption("ACC",value=1E-4)
+    for i in range(nruns):
 
-    ncalls = 0
-    start_time = time.time()
-    solution = optimize(optProb,sens="FD")
-    opt_time = time.time() - start_time
+        # initial_spacing_array = np.zeros(nturbs-1) + 5*rotor_diameter * (np.random.rand(nturbs - 1) * 0.4 + 0.6)
+        # initial_spacing_array = np.zeros(nturbs-1) + 3*rotor_diameter
+        initial_spacing_array = (np.random.rand() * 5 + 3) *rotor_diameter
+        
+        x = {}
+        x["spacing_array"] = initial_spacing_array
 
-    # END RESULTS
-    opt_DVs = solution.getDVs()
-    opt_spacing = opt_DVs["spacing_array"]
+        funcs,fail = obj_func(x)
+        initial_density = -funcs["obj"]
+        print(initial_density)
 
-    funcs, fail = obj_func(opt_DVs)
-    opt_density = -funcs["obj"]
+        # OPTIMIZATION
+        optProb = pyoptsparse.Optimization("optimize 1D layout",obj_func)
 
-    print("opt_density: ", opt_density)
-    print("ncalls: ", ncalls)
-    print("time: ", opt_time)
-    print("opt_spacing: ", repr(opt_spacing))
+        # optProb.addVarGroup("spacing_array", nturbs-1, varType="c", value=initial_spacing_array, lower=3 * rotor_diameter, upper=1E6)
+        optProb.addVar("spacing_array", varType="c", value=initial_spacing_array, lower=3 * rotor_diameter, upper=1E6)
+        optProb.addObj("obj")
+        optimize = pyoptsparse.SLSQP()
+        optimize.setOption("IPRINT",value=0)
+        optimize.setOption("IFILE",value="SLSQP%s.out"%i)
+        
 
-    results_dict = {}
-    results_dict["opt_time"] = float(opt_time)
-    results_dict["ncalls"] = int(ncalls)
-    results_dict["opt_density"] = float(opt_density)
-    results_dict["opt_spacing"] = opt_spacing.tolist()
-    results_filename = '1_results/codesign.yml'
-    with open(results_filename, 'w') as outfile:
-        yaml.dump(results_dict, outfile)
+        ncalls = 0
+        start_time = time.time()
+        solution = optimize(optProb,sens="FD")
+        opt_time = time.time() - start_time
+
+        print("solution", solution)
+        print("optimize: ", optimize)
+        print(dir(solution))
+        # print(solution.optProb)
+        # print(solution.fStar)
+        # print(solution.fStar)
+        # print(solution.lambdaStar)
+        print(solution.optInform)
+        # print(solution.info)
+        # print(optProb.info)
+
+        # END RESULTS
+        opt_DVs = solution.getDVs()
+        opt_spacing = opt_DVs["spacing_array"]
+
+        funcs, fail = obj_func(opt_DVs)
+        opt_density = -funcs["obj"]
+
+        print("opt_density: ", opt_density)
+        print("ncalls: ", ncalls)
+        print("time: ", opt_time)
+        print("opt_spacing: ", repr(opt_spacing))
+
+        results_dict = {}
+        results_dict["opt_time"] = float(opt_time)
+        results_dict["ncalls"] = int(ncalls)
+        results_dict["opt_density"] = float(opt_density)
+        results_dict["opt_spacing"] = opt_spacing.tolist()
+        # results_filename = '1_results/codesign_%s.yml'%i
+        results_filename = '1_results/layout_continuous_%s.yml'%i
+        # results_filename = '1_results/layout_%s.yml'%i
+        # with open(results_filename, 'w') as outfile:
+        #     yaml.dump(results_dict, outfile)
 
 

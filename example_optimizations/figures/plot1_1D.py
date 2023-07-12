@@ -98,7 +98,7 @@ orange = "EC9B3B"
 yellow = "F7D716"
 colormap = get_continuous_cmap([blue,white])
 
-fi = FlorisInterface('/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/inputs/gch.yaml')
+fi = FlorisInterface('/glb/hou/pt.sgs/data/offshorewind/uspsty/Projects/GeometricYaw/example_optimizations/inputs/gch.yaml')
 nturbs = 16
 wind_directions = [270.0]
 wind_speeds = [10.0]
@@ -107,13 +107,14 @@ turbine_y = np.zeros(nturbs)
 
 
 
-filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/layout.yml"
+filename = "/glb/hou/pt.sgs/data/offshorewind/uspsty/Projects/GeometricYaw/example_optimizations/1_results/layout_continuous_25.yml"
 # filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/codesign.yml"
 with open(filename, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 spacing_array = data_loaded["opt_spacing"]
 for i in range(nturbs-1):
-    turbine_x[i+1] = turbine_x[i] + spacing_array[i]
+    # turbine_x[i+1] = turbine_x[i] + spacing_array[i]
+    turbine_x[i+1] = turbine_x[i] + spacing_array
 fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
                     layout=(turbine_x, turbine_y))
 
@@ -121,9 +122,9 @@ fig = plt.figure(figsize=(6,3))
 ax1 = plt.subplot(411)
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, np.zeros((1,1,16)), ax1)
 plot_turbines(ax1, turbine_x, turbine_y, np.zeros(16), np.zeros(nturbs)+126, color=None,
-              wind_direction=270.0,linewidth=0.75)
+              wind_direction=270.0)
 
-filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/layout_yaw.yml"
+filename = "/glb/hou/pt.sgs/data/offshorewind/uspsty/Projects/GeometricYaw/example_optimizations/1_results/layout_continuous_yaw.yml"
 with open(filename, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 opt_yaw = data_loaded["opt_yaw"]
@@ -133,25 +134,26 @@ yaw_angles[0,0,:] = opt_yaw
 print(yaw_angles)
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax2)
 plot_turbines(ax2, turbine_x, turbine_y, opt_yaw, np.zeros(nturbs)+126, color=None,
-              wind_direction=270.0,linewidth=0.75)
+              wind_direction=270.0)
 
 # filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/layout.yml"
-filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/codesign.yml"
+filename = "/glb/hou/pt.sgs/data/offshorewind/uspsty/Projects/GeometricYaw/example_optimizations/1_results/codesign_continuous_25.yml"
 with open(filename, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 spacing_array = data_loaded["opt_spacing"]
 for i in range(nturbs-1):
-    turbine_x[i+1] = turbine_x[i] + spacing_array[i]
+    # turbine_x[i+1] = turbine_x[i] + spacing_array[i]
+    turbine_x[i+1] = turbine_x[i] + spacing_array
 fi.reinitialize(wind_directions=wind_directions, wind_speeds=wind_speeds,
                     layout=(turbine_x, turbine_y))
 
 ax3 = plt.subplot(413)
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, np.zeros((1,1,16)), ax3)
 plot_turbines(ax3, turbine_x, turbine_y, np.zeros(16), np.zeros(nturbs)+126, color=None,
-              wind_direction=270.0,linewidth=0.75)
+              wind_direction=270.0)
 
 
-filename = "/Users/astanley/Projects/active_projects/GeometricYaw/example_optimizations/1_results/codesign_yaw.yml"
+filename = "/glb/hou/pt.sgs/data/offshorewind/uspsty/Projects/GeometricYaw/example_optimizations/1_results/codesign_continuous_yaw.yml"
 with open(filename, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 opt_yaw = data_loaded["opt_yaw"]
@@ -160,7 +162,7 @@ yaw_angles = np.zeros((1,1,16))
 yaw_angles[0,0,:] = opt_yaw
 im = plot_layout_opt_results_with_flow(fi, wind_directions, wind_speeds, yaw_angles, ax4)
 plot_turbines(ax4, turbine_x, turbine_y, opt_yaw, np.zeros(nturbs)+126, color=None,
-              wind_direction=270.0,linewidth=0.75)
+              wind_direction=270.0)
 
 
 ax1.axis("off")
@@ -170,10 +172,14 @@ ax4.axis("off")
 
 print(repr(turbine_x))
 
-ax1.set_title("no yaw control: 1785 W/m",fontsize=8,y=0.7)
-ax2.set_title("optimized yaw control: 1991 W/m",fontsize=8,y=0.7)
-ax3.set_title("no yaw control: 1740 W/m",fontsize=8,y=0.7)
-ax4.set_title("optimized yaw control: 2135 W/m",fontsize=8,y=0.7)
+# ax1.set_title("no yaw control: 1785 W/m",fontsize=8,y=0.7)
+# ax2.set_title("optimized yaw control: 1991 W/m",fontsize=8,y=0.7)
+# ax3.set_title("no yaw control: 1740 W/m",fontsize=8,y=0.7)
+# ax4.set_title("optimized yaw control: 2135 W/m",fontsize=8,y=0.7)
+ax1.set_title("no yaw control: 1784 W/m",fontsize=8,y=0.7)
+ax2.set_title("optimized yaw control: 1996 W/m",fontsize=8,y=0.7)
+ax3.set_title("no yaw control: 1718 W/m",fontsize=8,y=0.7)
+ax4.set_title("optimized yaw control: 2125 W/m",fontsize=8,y=0.7)
 
 plt.subplots_adjust(left=0.06,right=0.91,bottom=0.01,top=0.97,hspace=0.0)
 
@@ -189,6 +195,6 @@ ax1.text(0,400,"A.1",fontsize=12,weight="bold",horizontalalignment="left",vertic
 ax2.text(0,400,"A.2",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
 ax3.text(0,400,"B.1",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
 ax4.text(0,400,"B.2",fontsize=12,weight="bold",horizontalalignment="left",verticalalignment="bottom")
-plt.savefig("line_layouts.png", transparent=True)
+plt.savefig("line_layouts_revision.png", transparent=True)
 plt.show()
 
